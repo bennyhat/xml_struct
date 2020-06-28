@@ -1,0 +1,9 @@
+%{
+  "accessible": {:hex, :accessible, "0.2.1", "09b2808ee9a451e392beab2766bec93daf2944ad31cc130b172fc49bde8edb3c", [:mix], [], "hexpm", "e4462b4e6f55369ac9c74320a55686a973d08ba641cadedcb494ccf38bf1910d"},
+  "checkov": {:hex, :checkov, "1.0.0", "cecf1be22ea506b2fbd6741d7c00f4876bb2be76ea1b95493c25b51028f24410", [:mix], [], "hexpm", "9fa85e6fdf1bcec2dd0d996d0c1e5a83e336dafb97c931232af1cb1e7ef4420a"},
+  "faker": {:hex, :faker, "0.13.0", "8abcb996f010ccd6c85588c89fc047f11134e04da019b70252f95431d721a3dc", [:mix], [], "hexpm", "b0016680cae6776e3d1caa34d70438acc09c11c003e80fd3d44f79ec7370be00"},
+  "inflectorex": {:hex, :inflectorex, "0.1.2", "921598c07910c0dabd64bc9516940f77cbff2886fbbbc4e6d13118f890500827", [:mix], [], "hexpm", "28221bcbfe2769dc880c2b60199af81dd5135ad99969dd58ef8091eebc5d2ea9"},
+  "recase": {:hex, :recase, "0.6.0", "1dd2dd2f4e06603b74977630e739f08b7fedbb9420cc14de353666c2fc8b99f4", [:mix], [], "hexpm", "8712e318420a228eb2e6366ada230148ed3a4316a798319edd5512f64d78c990"},
+  "sweet_xml": {:hex, :sweet_xml, "0.6.6", "fc3e91ec5dd7c787b6195757fbcf0abc670cee1e4172687b45183032221b66b8", [:mix], [], "hexpm", "2e1ec458f892ffa81f9f8386e3f35a1af6db7a7a37748a64478f13163a1f3573"},
+  "typed_struct": {:hex, :typed_struct, "0.1.4", "25971ce73a8b336dedf2f80e4dafaab111af127ba4773955b66805c89e197f6a", [:mix], [], "hexpm", "c48b743b1812189431e0280941790af150ae5372f7ac51e7097c03a261a35bd6"},
+}

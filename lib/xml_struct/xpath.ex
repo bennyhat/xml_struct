@@ -1,6 +1,4 @@
 defmodule XmlStruct.Xpath do
-  alias XmlStruct.Xpath
-
   import XmlStruct.Xpath.CastingHelpers
 
   @default_parent_options %{
@@ -88,20 +86,20 @@ defmodule XmlStruct.Xpath do
   defp apply_type_augments({name, type, selector, %{is_simple_type: true} = opts}) do
     case type do
       :integer ->
-        {name, selector |> SweetXml.transform_by(&Xpath.safe_to_integer/1), opts}
+        {name, selector |> SweetXml.transform_by(&safe_to_integer/1), opts}
 
       :boolean ->
-        {name, selector |> SweetXml.transform_by(&Xpath.safe_to_boolean/1), opts}
+        {name, selector |> SweetXml.transform_by(&safe_to_boolean/1), opts}
 
       _ ->
-        {name, selector |> SweetXml.transform_by(&Xpath.safe_to_atom/1), opts}
+        {name, selector |> SweetXml.transform_by(&safe_to_atom/1), opts}
     end
   end
 
   defp apply_type_augments({name, type, selector, %{enforce: false} = opts}) do
     case type do
-      String -> {name, selector |> SweetXml.transform_by(&Xpath.safe_to_string/1), opts}
-      :boolean -> {name, selector |> SweetXml.transform_by(&Xpath.safe_to_boolean/1), opts}
+      String -> {name, selector |> SweetXml.transform_by(&safe_to_string/1), opts}
+      :boolean -> {name, selector |> SweetXml.transform_by(&safe_to_boolean/1), opts}
       _ -> {name, selector, opts}
     end
   end
