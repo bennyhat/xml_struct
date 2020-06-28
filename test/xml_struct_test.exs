@@ -68,10 +68,9 @@ defmodule XmlStructTest do
 
       assert %{
         "NestedFieldOne" => true,
-        "FieldOne.member.1" => false,
-        "FieldThree.member.2" => random_integer,
-        "FieldTwo" => "goodbye"
-      } == NestedSimpleStruct.serialize(
+        "NestedFieldThree.member.1.FieldOne" => false,
+        "NestedFieldThree.member.2.FieldThree" => random_integer,
+        "NestedFieldTwo.FieldTwo" => "goodbye"} == NestedSimpleStruct.serialize(
         %NestedSimpleStruct{
           nested_field_one: true,
           nested_field_two: %SimpleStruct{
@@ -90,25 +89,24 @@ defmodule XmlStructTest do
     end
   end
 
-  describe "DeeployNestedSimpleStruct.serialize/1" do
-    test "brings all leaf level fields up to top level (producing weird results)" do
+  describe "DeeplyNestedSimpleStruct.serialize/1" do
+    test "serializes nested structs as objects" do
       random_integer = Faker.random_between(1, 10)
 
       assert %{
         "DeeplyNestedFieldOne" => true,
-        "NestedFieldOne" => true,
-        "NestedFieldOne.member.1" => true,
-        "NestedFieldOne.member.2" => false,
-        "FieldOne.member.1" => false,
-        "FieldOne.member.1.member.1" => false,
-        "FieldOne.member.1.member.2" => true,
-        "FieldThree.member.2" => random_integer,
-        "FieldThree.member.2.member.1" => random_integer,
-        "FieldThree.member.2.member.2" => random_integer,
-        "FieldTwo" => "goodbye",
-        "FieldTwo.member.1" => "world",
-        "FieldTwo.member.2" => "things"
-      } == DeeplyNestedSimpleStruct.serialize(
+        "DeeplyNestedFieldThree.member.1.NestedFieldOne" => true,
+        "DeeplyNestedFieldThree.member.1.NestedFieldThree.member.1.FieldOne" => false,
+        "DeeplyNestedFieldThree.member.1.NestedFieldThree.member.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldThree.member.1.NestedFieldTwo.FieldTwo" => "world",
+        "DeeplyNestedFieldThree.member.2.NestedFieldOne" => false,
+        "DeeplyNestedFieldThree.member.2.NestedFieldThree.member.1.FieldOne" => true,
+        "DeeplyNestedFieldThree.member.2.NestedFieldThree.member.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldThree.member.2.NestedFieldTwo.FieldTwo" => "things",
+        "DeeplyNestedFieldTwo.NestedFieldOne" => true,
+        "DeeplyNestedFieldTwo.NestedFieldThree.member.1.FieldOne" => false,
+        "DeeplyNestedFieldTwo.NestedFieldThree.member.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldTwo.NestedFieldTwo.FieldTwo" => "goodbye"} == DeeplyNestedSimpleStruct.serialize(
         %DeeplyNestedSimpleStruct{
           deeply_nested_field_one: true,
           deeply_nested_field_two: %NestedSimpleStruct{

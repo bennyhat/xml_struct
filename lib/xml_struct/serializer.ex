@@ -58,7 +58,7 @@ defmodule XmlStruct.Serializer do
       {
         field,
         Map.merge(
-          %{serialize_only: [], serialize_as_object: false, list_prefix: "member"},
+          %{serialize_only: [], serialize_as_object: true, list_prefix: "member"},
           Enum.into(options, %{})
         )
       }
