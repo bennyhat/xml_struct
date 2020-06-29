@@ -4,46 +4,50 @@ defmodule XmlStruct.Serializer do
     list_prefix: "member"
   }
 
-  @default_options %{
+  @default_child_options %{
     serialize_only: [],
     serialize_as_object: true
   }
 
-  def serialize(type_map, xml_list, overrides, opts \\ %{})
-  def serialize(type_map, xml_list, overrides, opts) when is_list(xml_list) do
+  def serialize(type_map, xml_list, opts \\ %{})
+  def serialize(type_map, xml_list, opts) when is_list(xml_list) do
     xml_list
-    |> Enum.map(&serialize(type_map, &1, overrides, opts))
+    |> Enum.map(&serialize(type_map, &1, opts))
     |> add_list_prefix()
   end
 
-  def serialize(type_map, %_is_struct{} = xml, overrides, opts) do
-    serialize(type_map, Map.from_struct(xml), overrides, opts)
+  def serialize(type_map, %_is_struct{} = xml, opts) do
+    serialize(type_map, Map.from_struct(xml), opts)
   end
 
-  def serialize(type_map, xml, [] = _overrides, opts) when is_map(xml) do
-    serialize(type_map, xml, all_key_mappings(xml), opts)
-  end
-
-  def serialize(type_map, xml, [_ | _] = overrides, opts) when is_map(xml) do
+  def serialize(type_map, xml, %{serialize_only: [_|_]} = opts) when is_map(xml) do
     options = Map.merge(@default_parent_options, opts)
+    serialize_only = Map.get(opts, :serialize_only)
 
     xml
     |> Map.keys()
-    |> keep_allowed_fields(overrides)
+    |> keep_allowed_fields(serialize_only)
     |> attach_options(type_map, options)
-    |> apply_field_name_and_value(xml, overrides)
+    |> apply_field_name_and_value(xml, serialize_only)
     |> serialize_fields(type_map)
     |> List.flatten()
     |> remove_nil_or_empty_fields()
     |> Map.new()
   end
 
-  def serialize(_type_map, atom_type, _overrides, _opts)
+  def serialize(type_map, xml, opts) when is_map(xml) do
+    opts_with_serialize_only = opts
+    |> Map.put(:serialize_only, all_key_mappings(xml))
+
+    serialize(type_map, xml, opts_with_serialize_only)
+  end
+
+  def serialize(_type_map, atom_type, _opts)
       when is_atom(atom_type) and not is_nil(atom_type) and not is_boolean(atom_type) do
     Atom.to_string(atom_type)
   end
 
-  def serialize(_type_map, other_type, _overrides, _opts) do
+  def serialize(_type_map, other_type, _opts) do
     other_type
   end
 
@@ -57,9 +61,9 @@ defmodule XmlStruct.Serializer do
     end)
   end
 
-  defp keep_allowed_fields(fields, allowed_fields) do
+  defp keep_allowed_fields(fields, serialize_only) do
     fields
-    |> Enum.reject(fn field -> is_nil(Keyword.get(allowed_fields, field)) end)
+    |> Enum.reject(fn field -> is_nil(Keyword.get(serialize_only, field)) end)
   end
 
   defp attach_options(fields, type_map, opts) do
@@ -68,17 +72,17 @@ defmodule XmlStruct.Serializer do
     |> Enum.map(fn {field, {_type, options}} ->
       {
         field,
-        Map.merge(opts, @default_options)
+        Map.merge(opts, @default_child_options)
         |> Map.merge(Enum.into(options, %{}))
       }
     end)
   end
 
-  defp apply_field_name_and_value(fields, xml, allowed_fields) do
+  defp apply_field_name_and_value(fields, xml, serialize_only) do
     fields
     |> Enum.map(fn {field, opts} ->
       {
-        Keyword.get(allowed_fields, field),
+        Keyword.get(serialize_only, field),
         Map.get(xml, field),
         opts
       }
@@ -92,27 +96,27 @@ defmodule XmlStruct.Serializer do
 
   defp serialize_field_item(
          {_field, [%struct{} = _element | _] = value,
-          %{serialize_only: allowed_fields, serialize_as_object: false}},
+          %{serialize_as_object: false} = opts},
          _type_map
        ) do
-    apply(struct, :serialize, [value, allowed_fields])
+    apply(struct, :serialize, [value, parent_options(opts)])
   end
 
   defp serialize_field_item(
          {_field, %struct{} = value,
-          %{serialize_only: allowed_fields, serialize_as_object: false}},
+          %{serialize_as_object: false} = opts},
          _type_map
        ) do
-    apply(struct, :serialize, [value, allowed_fields])
+    apply(struct, :serialize, [value, parent_options(opts)])
     |> Map.to_list()
   end
 
   defp serialize_field_item(
          {field, %struct{} = value,
-          %{serialize_only: allowed_fields, serialize_as_object: true, list_prefix: _list_prefix}},
+          %{serialize_as_object: true, list_prefix: _list_prefix} = opts},
          _type_map
        ) do
-    value = apply(struct, :serialize, [value, allowed_fields])
+    value = apply(struct, :serialize, [value, parent_options(opts)])
 
     Enum.map(value, fn {k, v} ->
       {"#{field}.#{k}", v}
@@ -121,29 +125,37 @@ defmodule XmlStruct.Serializer do
 
   defp serialize_field_item(
          {field, [%struct{} = _element | _] = value,
-          %{serialize_only: allowed_fields, list_prefix: list_prefix}},
+          %{list_prefix: list_prefix} = opts},
          _type_map
        )
        when is_list(value) do
     Enum.map(value, fn v ->
-      apply(struct, :serialize, [v, allowed_fields])
+      apply(struct, :serialize, [v, parent_options(opts)])
     end)
     |> add_object_prefix(field, list_prefix)
   end
 
   defp serialize_field_item(
-         {field, value, %{serialize_only: allowed_fields, list_prefix: _list_prefix}},
+         {field, value, %{list_prefix: _list_prefix} = opts},
          type_map
        )
        when is_list(value) do
+
     Enum.map(value, fn v ->
-      {field, serialize(type_map, v, allowed_fields)}
+      {field, serialize(type_map, v, parent_options(opts))}
     end)
     |> add_list_prefix()
   end
 
-  defp serialize_field_item({field, value, %{serialize_only: allowed_fields}}, type_map) do
-    {field, serialize(type_map, value, allowed_fields)}
+  defp serialize_field_item({field, value, opts}, type_map) do
+    {field, serialize(type_map, value, parent_options(opts))}
+  end
+
+  defp parent_options(opts) do
+    {parent_options, _}  = Map.split(opts, Map.keys(@default_parent_options))
+    %{serialize_only: serialize_only} = opts
+
+    Map.merge(parent_options, %{serialize_only: serialize_only})
   end
 
   defp all_key_mappings(map) do

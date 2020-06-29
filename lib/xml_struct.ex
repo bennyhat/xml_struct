@@ -43,10 +43,12 @@ defmodule XmlStruct do
 
       use Accessible
 
-      def serialize(xml, allowed_fields \\ []) do
+      def serialize(xml, options \\ %{}) do
         type_mappings_as_map = Enum.into(@type_mapping, %{})
+        parent_options = unquote(options_as_map)
+        options_merged_with_parent = Map.merge(parent_options, options)
 
-        Serializer.serialize(type_mappings_as_map, xml, allowed_fields, unquote(options_as_map))
+        Serializer.serialize(type_mappings_as_map, xml, options_merged_with_parent)
       end
 
       def deserialize(xml) do
