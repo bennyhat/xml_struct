@@ -1,25 +1,36 @@
 defmodule XmlStruct.Serializer do
-  def serialize(type_map, xml, overrides \\ [])
+  @default_parent_options %{
+    tag_format: :pascal_case,
+    list_prefix: "member"
+  }
 
-  def serialize(type_map, xml_list, overrides) when is_list(xml_list) do
+  @default_options %{
+    serialize_only: [],
+    serialize_as_object: true
+  }
+
+  def serialize(type_map, xml_list, overrides, opts \\ %{})
+  def serialize(type_map, xml_list, overrides, opts) when is_list(xml_list) do
     xml_list
-    |> Enum.map(&serialize(type_map, &1, overrides))
+    |> Enum.map(&serialize(type_map, &1, overrides, opts))
     |> add_list_prefix()
   end
 
-  def serialize(type_map, %_is_struct{} = xml, overrides) do
-    serialize(type_map, Map.from_struct(xml), overrides)
+  def serialize(type_map, %_is_struct{} = xml, overrides, opts) do
+    serialize(type_map, Map.from_struct(xml), overrides, opts)
   end
 
-  def serialize(type_map, xml, [] = _overrides) when is_map(xml) do
-    serialize(type_map, xml, all_key_mappings(xml))
+  def serialize(type_map, xml, [] = _overrides, opts) when is_map(xml) do
+    serialize(type_map, xml, all_key_mappings(xml), opts)
   end
 
-  def serialize(type_map, xml, [_ | _] = overrides) when is_map(xml) do
+  def serialize(type_map, xml, [_ | _] = overrides, opts) when is_map(xml) do
+    options = Map.merge(@default_parent_options, opts)
+
     xml
     |> Map.keys()
     |> keep_allowed_fields(overrides)
-    |> attach_options(type_map)
+    |> attach_options(type_map, options)
     |> apply_field_name_and_value(xml, overrides)
     |> serialize_fields(type_map)
     |> List.flatten()
@@ -27,12 +38,12 @@ defmodule XmlStruct.Serializer do
     |> Map.new()
   end
 
-  def serialize(_type_map, atom_type, _overrides)
+  def serialize(_type_map, atom_type, _overrides, _opts)
       when is_atom(atom_type) and not is_nil(atom_type) and not is_boolean(atom_type) do
     Atom.to_string(atom_type)
   end
 
-  def serialize(_type_map, other_type, _overrides) do
+  def serialize(_type_map, other_type, _overrides, _opts) do
     other_type
   end
 
@@ -51,16 +62,14 @@ defmodule XmlStruct.Serializer do
     |> Enum.reject(fn field -> is_nil(Keyword.get(allowed_fields, field)) end)
   end
 
-  defp attach_options(fields, type_map) do
+  defp attach_options(fields, type_map, opts) do
     fields
     |> Enum.map(fn field -> {field, Map.get(type_map, field, {nil, []})} end)
     |> Enum.map(fn {field, {_type, options}} ->
       {
         field,
-        Map.merge(
-          %{serialize_only: [], serialize_as_object: true, list_prefix: "member"},
-          Enum.into(options, %{})
-        )
+        Map.merge(opts, @default_options)
+        |> Map.merge(Enum.into(options, %{}))
       }
     end)
   end

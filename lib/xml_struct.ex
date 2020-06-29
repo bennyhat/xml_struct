@@ -14,6 +14,8 @@ defmodule XmlStruct do
   end
 
   defmacro xmlstruct(opts \\ [], do: block) do
+    options_as_map = Macro.escape(Enum.into(opts, %{}))
+
     quote do
       import SweetXml
       import XmlStruct
@@ -36,17 +38,15 @@ defmodule XmlStruct do
         __MODULE__,
         @type_listing,
         :xpath_selectors,
-        Enum.into(unquote(opts), %{})
+        unquote(options_as_map)
       )
 
       use Accessible
 
-      def serialize(%__MODULE__{} = xml_struct) do
-        Serializer.serialize(Enum.into(@type_mapping, %{}), xml_struct)
-      end
+      def serialize(xml, allowed_fields \\ []) do
+        type_mappings_as_map = Enum.into(@type_mapping, %{})
 
-      def serialize(xml, allowed_fields) do
-        Serializer.serialize(Enum.into(@type_mapping, %{}), xml, allowed_fields)
+        Serializer.serialize(type_mappings_as_map, xml, allowed_fields, unquote(options_as_map))
       end
 
       def deserialize(xml) do
@@ -57,11 +57,13 @@ defmodule XmlStruct do
       end
 
       def new(map) do
-        Struct.new(__MODULE__, Enum.into(@type_mapping, %{}), map)
+        type_mappings_as_map = Enum.into(@type_mapping, %{})
+
+        Struct.new(__MODULE__, type_mappings_as_map, map)
       end
 
       def xpath_selector() do
-        Xpath.xpath(__MODULE__, @type_listing, Enum.into(unquote(opts), %{}))
+        Xpath.xpath(__MODULE__, @type_listing, unquote(options_as_map))
       end
 
       def xpath_selectors() do

@@ -28,6 +28,16 @@ defmodule DeeplyNestedSimpleStruct do
   end
 end
 
+defmodule NestedDifferentListPrefixStruct do
+  use XmlStruct
+
+  xmlstruct list_prefix: "item" do
+    field :nested_field_one, boolean()
+    field :nested_field_two, SimpleStruct.t()
+    field :nested_field_three, [SimpleStruct.t()]
+  end
+end
+
 defmodule XmlStructTest do
   use ExUnit.Case
   doctest XmlStruct
@@ -63,7 +73,7 @@ defmodule XmlStructTest do
   end
 
   describe "NestedSimpleStruct.serialize/1" do
-    test "brings all leaf level fields up to top level (producing weird results)" do
+    test "serializes nested structs as objects" do
       random_integer = Faker.random_between(1, 10)
 
       assert %{
@@ -151,6 +161,33 @@ defmodule XmlStructTest do
                   field_three: random_integer
                 }
               ]
+            }
+          ]
+        }
+      )
+    end
+  end
+
+  describe "NestedDifferentMemberStruct" do
+    test "serializes with a module-wide list prefix" do
+      random_integer = Faker.random_between(1, 10)
+
+      assert %{
+        "NestedFieldOne" => true,
+        "NestedFieldThree.item.1.FieldOne" => false,
+        "NestedFieldThree.item.2.FieldThree" => random_integer,
+        "NestedFieldTwo.FieldTwo" => "goodbye"} == NestedDifferentListPrefixStruct.serialize(
+        %NestedDifferentListPrefixStruct{
+          nested_field_one: true,
+          nested_field_two: %SimpleStruct{
+            field_two: "goodbye"
+          },
+          nested_field_three: [
+            %SimpleStruct{
+              field_one: false
+            },
+            %SimpleStruct{
+              field_three: random_integer
             }
           ]
         }
