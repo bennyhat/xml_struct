@@ -1,34 +1,4 @@
-defmodule SimpleStruct do
-  use XmlStruct
-
-  xmlstruct do
-    field :field_one, boolean()
-    field :field_two, String.t()
-    field :field_three, integer()
-  end
-end
-
-defmodule NestedSimpleStruct do
-  use XmlStruct
-
-  xmlstruct do
-    field :nested_field_one, boolean()
-    field :nested_field_two, SimpleStruct.t()
-    field :nested_field_three, [SimpleStruct.t()]
-  end
-end
-
-defmodule DeeplyNestedSimpleStruct do
-  use XmlStruct
-
-  xmlstruct do
-    field :deeply_nested_field_one, boolean()
-    field :deeply_nested_field_two, NestedSimpleStruct.t()
-    field :deeply_nested_field_three, [NestedSimpleStruct.t()]
-  end
-end
-
-defmodule NestedListPrefixStruct do
+defmodule PrefixTest.ModulePrefixThing do
   use XmlStruct
 
   xmlstruct list_prefix: "thing" do
@@ -38,7 +8,7 @@ defmodule NestedListPrefixStruct do
   end
 end
 
-defmodule DeeplyNestedListPrefixStruct do
+defmodule  PrefixTest.ModulePrefixItem do
   use XmlStruct
 
   xmlstruct list_prefix: "item" do
@@ -48,17 +18,17 @@ defmodule DeeplyNestedListPrefixStruct do
   end
 end
 
-defmodule DeeplyNestedListPrefixWithChildListPrefixStruct do
+defmodule PrefixTest.ModulePrefixItemChildModulePrefixThing do
   use XmlStruct
 
   xmlstruct list_prefix: "item" do
     field :deeply_nested_field_one, boolean()
     field :deeply_nested_field_two, [NestedSimpleStruct.t()]
-    field :deeply_nested_field_three, [NestedListPrefixStruct.t()]
+    field :deeply_nested_field_three, [PrefixTest.ModulePrefixThing.t()]
   end
 end
 
-defmodule DeeplyNestedFieldListPrefixStruct do
+defmodule PrefixTest.ModulePrefixItemChildFieldPrefixThing do
   use XmlStruct
 
   xmlstruct list_prefix: "item" do
@@ -68,17 +38,17 @@ defmodule DeeplyNestedFieldListPrefixStruct do
   end
 end
 
-defmodule DeeplyNestedFieldListPrefixWithChildListPrefixStruct do
+defmodule PrefixTest.ModulePrefixItemChildFieldPrefixStuff do
   use XmlStruct
 
   xmlstruct list_prefix: "item" do
     field :deeply_nested_field_one, boolean()
     field :deeply_nested_field_two, [NestedSimpleStruct.t()]
-    field :deeply_nested_field_three, [NestedListPrefixStruct.t()], list_prefix: "stuff"
+    field :deeply_nested_field_three, [PrefixTest.ModulePrefixThing.t()], list_prefix: "stuff"
   end
 end
 
-defmodule XmlStructTest do
+defmodule PrefixTest do
   use ExUnit.Case
   doctest XmlStruct
 
@@ -210,7 +180,7 @@ defmodule XmlStructTest do
     end
   end
 
-  describe "DeeplyNestedListPrefixStruct.serialize/1" do
+  describe "PrefixTest.ModulePrefix.serialize/1" do
     test "serializes with a module-wide list prefix" do
       random_integer = Faker.random_between(1, 10)
 
@@ -225,8 +195,8 @@ defmodule XmlStructTest do
         "DeeplyNestedFieldThree.item.2.NestedFieldThree.item.1.FieldOne" => true,
         "DeeplyNestedFieldThree.item.2.NestedFieldThree.item.2.FieldThree" => random_integer,
         "DeeplyNestedFieldThree.item.2.NestedFieldTwo.FieldTwo" => "things"
-      } == DeeplyNestedListPrefixStruct.serialize(
-        %DeeplyNestedListPrefixStruct{
+      } == PrefixTest.ModulePrefixItem.serialize(
+        %PrefixTest.ModulePrefixItem{
           deeply_nested_field_one: true,
           deeply_nested_field_two: [
             %SimpleStruct{
@@ -284,11 +254,11 @@ defmodule XmlStructTest do
         "DeeplyNestedFieldThree.item.2.NestedFieldThree.thing.1.FieldOne" => true,
         "DeeplyNestedFieldThree.item.2.NestedFieldThree.thing.2.FieldThree" => random_integer,
         "DeeplyNestedFieldThree.item.2.NestedFieldTwo.FieldTwo" => "things"
-      } == DeeplyNestedListPrefixWithChildListPrefixStruct.serialize(
-        %DeeplyNestedListPrefixWithChildListPrefixStruct{
+      } == PrefixTest.ModulePrefixItemChildModulePrefixThing.serialize(
+        %PrefixTest.ModulePrefixItemChildModulePrefixThing{
           deeply_nested_field_one: true,
           deeply_nested_field_two: [
-            %NestedListPrefixStruct{
+            %PrefixTest.ModulePrefixThing{
               nested_field_one: true,
               nested_field_two: %SimpleStruct{
                 field_two: "goodbye"
@@ -304,7 +274,7 @@ defmodule XmlStructTest do
             }
           ],
           deeply_nested_field_three: [
-            %NestedListPrefixStruct{
+            %PrefixTest.ModulePrefixThing{
               nested_field_one: true,
               nested_field_two: %SimpleStruct{
                 field_two: "world"
@@ -318,7 +288,7 @@ defmodule XmlStructTest do
                 }
               ]
             },
-            %NestedListPrefixStruct{
+            %PrefixTest.ModulePrefixThing{
               nested_field_one: false,
               nested_field_two: %SimpleStruct{
                 field_two: "things"
@@ -338,7 +308,7 @@ defmodule XmlStructTest do
     end
   end
 
-  describe "DeeplyNestedFieldListPrefixStruct.serialize/1" do
+  describe "PrefixTest.ModulePrefixItemChildFieldPrefixThing.serialize/1" do
     test "serializes with a field-level list prefix" do
       random_integer = Faker.random_between(1, 10)
 
@@ -356,8 +326,8 @@ defmodule XmlStructTest do
         "DeeplyNestedFieldThree.thing.2.NestedFieldThree.thing.1.FieldOne" => true,
         "DeeplyNestedFieldThree.thing.2.NestedFieldThree.thing.2.FieldThree" => random_integer,
         "DeeplyNestedFieldThree.thing.2.NestedFieldTwo.FieldTwo" => "things"
-      } == DeeplyNestedFieldListPrefixStruct.serialize(
-        %DeeplyNestedFieldListPrefixStruct{
+      } == PrefixTest.ModulePrefixItemChildFieldPrefixThing.serialize(
+        %PrefixTest.ModulePrefixItemChildFieldPrefixThing{
           deeply_nested_field_one: true,
           deeply_nested_field_two: [
             %NestedSimpleStruct{
@@ -426,11 +396,11 @@ defmodule XmlStructTest do
         "DeeplyNestedFieldThree.stuff.2.NestedFieldThree.thing.1.FieldOne" => true,
         "DeeplyNestedFieldThree.stuff.2.NestedFieldThree.thing.2.FieldThree" => random_integer,
         "DeeplyNestedFieldThree.stuff.2.NestedFieldTwo.FieldTwo" => "things"
-      } == DeeplyNestedFieldListPrefixWithChildListPrefixStruct.serialize(
-        %DeeplyNestedFieldListPrefixWithChildListPrefixStruct{
+      } == PrefixTest.ModulePrefixItemChildFieldPrefixStuff.serialize(
+        %PrefixTest.ModulePrefixItemChildFieldPrefixStuff{
           deeply_nested_field_one: true,
           deeply_nested_field_two: [
-            %NestedListPrefixStruct{
+            %PrefixTest.ModulePrefixThing{
               nested_field_one: true,
               nested_field_two: %SimpleStruct{
                 field_two: "goodbye"
@@ -446,7 +416,7 @@ defmodule XmlStructTest do
             }
           ],
           deeply_nested_field_three: [
-            %NestedListPrefixStruct{
+            %PrefixTest.ModulePrefixThing{
               nested_field_one: true,
               nested_field_two: %SimpleStruct{
                 field_two: "world"
@@ -460,7 +430,7 @@ defmodule XmlStructTest do
                 }
               ]
             },
-            %NestedListPrefixStruct{
+            %PrefixTest.ModulePrefixThing{
               nested_field_one: false,
               nested_field_two: %SimpleStruct{
                 field_two: "things"

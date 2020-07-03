@@ -6,7 +6,7 @@ defmodule XmlStruct.Serializer do
     serialize_as_object: true
   }
 
-  @field_options_to_reset %{
+  @struct_options_to_reset %{
     serialize_only: []
   }
 
@@ -22,7 +22,7 @@ defmodule XmlStruct.Serializer do
 
   def serialize(type_map, map, %{serialize_only: [_|_]} = opts) when is_map(map) do
     struct_options = Map.merge(@default_struct_options, opts)
-    field_options = Map.merge(struct_options, @field_options_to_reset)
+    field_options = Map.merge(struct_options, @struct_options_to_reset)
 
     map_with_field_options_applied =
       map
@@ -121,17 +121,17 @@ defmodule XmlStruct.Serializer do
     |> List.flatten()
   end
   defp apply_list_prefix_to_key({k, v, %{list_prefix: lp} = o}) do
+    handle_index = fn {vi, i} ->
+      {"#{k}.#{lp}.#{i}", vi, o}
+    end
+
     case triage(v) do
       {:list, _} ->
         Enum.with_index(v, 1)
-        |> Enum.map(fn {vi, i} -> {add_list_prefix(k, lp, i), vi, o} end)
+        |> Enum.map(handle_index)
       _ ->
         {k, v, o}
     end
-  end
-
-  defp add_list_prefix(k, list_prefix, index) do
-    "#{k}.#{list_prefix}.#{index}"
   end
 
   defp apply_object_prefix_to_fields(xml) do
