@@ -28,10 +28,10 @@ defmodule DeeplyNestedSimpleStruct do
   end
 end
 
-defmodule NestedDifferentListPrefixStruct do
+defmodule NestedListPrefixStruct do
   use XmlStruct
 
-  xmlstruct list_prefix: "item" do
+  xmlstruct list_prefix: "thing" do
     field :nested_field_one, boolean()
     field :nested_field_two, SimpleStruct.t()
     field :nested_field_three, [SimpleStruct.t()]
@@ -45,6 +45,16 @@ defmodule DeeplyNestedListPrefixStruct do
     field :deeply_nested_field_one, boolean()
     field :deeply_nested_field_two, NestedSimpleStruct.t()
     field :deeply_nested_field_three, [NestedSimpleStruct.t()]
+  end
+end
+
+defmodule DeeplyNestedListPrefixWithChildListPrefixStruct do
+  use XmlStruct
+
+  xmlstruct list_prefix: "item" do
+    field :deeply_nested_field_one, boolean()
+    field :deeply_nested_field_two, NestedListPrefixStruct.t()
+    field :deeply_nested_field_three, [NestedListPrefixStruct.t()]
   end
 end
 
@@ -178,7 +188,7 @@ defmodule XmlStructTest do
     end
   end
 
-  describe "DeeplyNestedListPrefixStruct" do
+  describe "DeeplyNestedListPrefixStruct.serialize/1" do
     test "serializes with a module-wide list prefix" do
       random_integer = Faker.random_between(1, 10)
 
@@ -228,6 +238,73 @@ defmodule XmlStructTest do
               ]
             },
             %NestedSimpleStruct{
+              nested_field_one: false,
+              nested_field_two: %SimpleStruct{
+                field_two: "things"
+              },
+              nested_field_three: [
+                %SimpleStruct{
+                  field_one: true
+                },
+                %SimpleStruct{
+                  field_three: random_integer
+                }
+              ]
+            }
+          ]
+        }
+      )
+    end
+
+    test "does not cascade further than lower module level overrides" do
+      random_integer = Faker.random_between(1, 10)
+
+      assert %{
+        "DeeplyNestedFieldOne" => true,
+        "DeeplyNestedFieldThree.item.1.NestedFieldOne" => true,
+        "DeeplyNestedFieldThree.item.1.NestedFieldThree.thing.1.FieldOne" => false,
+        "DeeplyNestedFieldThree.item.1.NestedFieldThree.thing.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldThree.item.1.NestedFieldTwo.FieldTwo" => "world",
+        "DeeplyNestedFieldThree.item.2.NestedFieldOne" => false,
+        "DeeplyNestedFieldThree.item.2.NestedFieldThree.thing.1.FieldOne" => true,
+        "DeeplyNestedFieldThree.item.2.NestedFieldThree.thing.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldThree.item.2.NestedFieldTwo.FieldTwo" => "things",
+        "DeeplyNestedFieldTwo.NestedFieldOne" => true,
+        "DeeplyNestedFieldTwo.NestedFieldThree.thing.1.FieldOne" => false,
+        "DeeplyNestedFieldTwo.NestedFieldThree.thing.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldTwo.NestedFieldTwo.FieldTwo" => "goodbye"} == DeeplyNestedListPrefixWithChildListPrefixStruct.serialize(
+        %DeeplyNestedListPrefixWithChildListPrefixStruct{
+          deeply_nested_field_one: true,
+          deeply_nested_field_two: %NestedListPrefixStruct{
+            nested_field_one: true,
+            nested_field_two: %SimpleStruct{
+              field_two: "goodbye"
+            },
+            nested_field_three: [
+              %SimpleStruct{
+                field_one: false
+              },
+              %SimpleStruct{
+                field_three: random_integer
+              }
+            ]
+          },
+          deeply_nested_field_three: [
+            %NestedListPrefixStruct{
+              nested_field_one: true,
+              nested_field_two: %SimpleStruct{
+                field_two: "world"
+              },
+              nested_field_three: [
+                %SimpleStruct{
+                  field_one: false
+                },
+                %SimpleStruct{
+                  field_three: random_integer
+                }
+              ]
+            },
+            %NestedListPrefixStruct{
               nested_field_one: false,
               nested_field_two: %SimpleStruct{
                 field_two: "things"
