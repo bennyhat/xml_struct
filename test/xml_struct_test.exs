@@ -276,22 +276,22 @@ defmodule XmlStructTest do
       )
     end
 
-    test "overrides lower level settings" do
+    test "does not override lower level settings" do
       random_integer = Faker.random_between(1, 10)
 
       assert %{
         "DeeplyNestedFieldOne" => true,
         "DeeplyNestedFieldThree.item.1.NestedFieldOne" => true,
-        "DeeplyNestedFieldThree.item.1.NestedFieldThree.item.1.FieldOne" => false,
-        "DeeplyNestedFieldThree.item.1.NestedFieldThree.item.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldThree.item.1.NestedFieldThree.thing.1.FieldOne" => false,
+        "DeeplyNestedFieldThree.item.1.NestedFieldThree.thing.2.FieldThree" => random_integer,
         "DeeplyNestedFieldThree.item.1.NestedFieldTwo.FieldTwo" => "world",
         "DeeplyNestedFieldThree.item.2.NestedFieldOne" => false,
-        "DeeplyNestedFieldThree.item.2.NestedFieldThree.item.1.FieldOne" => true,
-        "DeeplyNestedFieldThree.item.2.NestedFieldThree.item.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldThree.item.2.NestedFieldThree.thing.1.FieldOne" => true,
+        "DeeplyNestedFieldThree.item.2.NestedFieldThree.thing.2.FieldThree" => random_integer,
         "DeeplyNestedFieldThree.item.2.NestedFieldTwo.FieldTwo" => "things",
         "DeeplyNestedFieldTwo.NestedFieldOne" => true,
-        "DeeplyNestedFieldTwo.NestedFieldThree.item.1.FieldOne" => false,
-        "DeeplyNestedFieldTwo.NestedFieldThree.item.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldTwo.NestedFieldThree.thing.1.FieldOne" => false,
+        "DeeplyNestedFieldTwo.NestedFieldThree.thing.2.FieldThree" => random_integer,
         "DeeplyNestedFieldTwo.NestedFieldTwo.FieldTwo" => "goodbye"} == DeeplyNestedListPrefixWithChildListPrefixStruct.serialize(
         %DeeplyNestedListPrefixWithChildListPrefixStruct{
           deeply_nested_field_one: true,
@@ -412,22 +412,22 @@ defmodule XmlStructTest do
       )
     end
 
-    test "overrides lower level settings" do
+    test "does not override lower module level settings" do
       random_integer = Faker.random_between(1, 10)
 
       assert %{
         "DeeplyNestedFieldOne" => true,
         "DeeplyNestedFieldThree.item.1.NestedFieldOne" => true,
-        "DeeplyNestedFieldThree.item.1.NestedFieldThree.item.1.FieldOne" => false,
-        "DeeplyNestedFieldThree.item.1.NestedFieldThree.item.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldThree.item.1.NestedFieldThree.thing.1.FieldOne" => false,
+        "DeeplyNestedFieldThree.item.1.NestedFieldThree.thing.2.FieldThree" => random_integer,
         "DeeplyNestedFieldThree.item.1.NestedFieldTwo.FieldTwo" => "world",
         "DeeplyNestedFieldThree.item.2.NestedFieldOne" => false,
-        "DeeplyNestedFieldThree.item.2.NestedFieldThree.item.1.FieldOne" => true,
-        "DeeplyNestedFieldThree.item.2.NestedFieldThree.item.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldThree.item.2.NestedFieldThree.thing.1.FieldOne" => true,
+        "DeeplyNestedFieldThree.item.2.NestedFieldThree.thing.2.FieldThree" => random_integer,
         "DeeplyNestedFieldThree.item.2.NestedFieldTwo.FieldTwo" => "things",
         "DeeplyNestedFieldTwo.NestedFieldOne" => true,
-        "DeeplyNestedFieldTwo.NestedFieldThree.member.1.FieldOne" => false,
-        "DeeplyNestedFieldTwo.NestedFieldThree.member.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldTwo.NestedFieldThree.thing.1.FieldOne" => false,
+        "DeeplyNestedFieldTwo.NestedFieldThree.thing.2.FieldThree" => random_integer,
         "DeeplyNestedFieldTwo.NestedFieldTwo.FieldTwo" => "goodbye"} == DeeplyNestedFieldListPrefixWithChildListPrefixStruct.serialize(
         %DeeplyNestedFieldListPrefixWithChildListPrefixStruct{
           deeply_nested_field_one: true,
