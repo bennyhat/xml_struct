@@ -24,13 +24,13 @@ defmodule XmlStruct.Serializer do
     struct_options = Map.merge(@default_struct_options, opts)
     field_options = Map.merge(struct_options, @field_options_to_reset)
 
-    map_with_struct_options_applied =
+    map_with_field_options_applied =
       map
       |> keep_desired_fields(struct_options)
       |> attach_options(type_map, field_options)
       |> apply_key_overrides(struct_options)
 
-    map_with_struct_options_applied
+    map_with_field_options_applied
     |> serialize_values(type_map)
     |> apply_list_prefix_to_keys()
     |> apply_object_prefix_to_fields()

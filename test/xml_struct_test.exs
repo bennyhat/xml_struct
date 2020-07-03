@@ -53,7 +53,7 @@ defmodule DeeplyNestedListPrefixWithChildListPrefixStruct do
 
   xmlstruct list_prefix: "item" do
     field :deeply_nested_field_one, boolean()
-    field :deeply_nested_field_two, NestedListPrefixStruct.t()
+    field :deeply_nested_field_two, [NestedSimpleStruct.t()]
     field :deeply_nested_field_three, [NestedListPrefixStruct.t()]
   end
 end
@@ -61,20 +61,20 @@ end
 defmodule DeeplyNestedFieldListPrefixStruct do
   use XmlStruct
 
-  xmlstruct do
+  xmlstruct list_prefix: "item" do
     field :deeply_nested_field_one, boolean()
-    field :deeply_nested_field_two, NestedSimpleStruct.t()
-    field :deeply_nested_field_three, [NestedSimpleStruct.t()], list_prefix: "item"
+    field :deeply_nested_field_two, [NestedSimpleStruct.t()]
+    field :deeply_nested_field_three, [NestedSimpleStruct.t()], list_prefix: "thing"
   end
 end
 
 defmodule DeeplyNestedFieldListPrefixWithChildListPrefixStruct do
   use XmlStruct
 
-  xmlstruct do
+  xmlstruct list_prefix: "item" do
     field :deeply_nested_field_one, boolean()
-    field :deeply_nested_field_two, NestedSimpleStruct.t()
-    field :deeply_nested_field_three, [NestedListPrefixStruct.t()], list_prefix: "item"
+    field :deeply_nested_field_two, [NestedSimpleStruct.t()]
+    field :deeply_nested_field_three, [NestedListPrefixStruct.t()], list_prefix: "stuff"
   end
 end
 
@@ -118,9 +118,10 @@ defmodule XmlStructTest do
 
       assert %{
         "NestedFieldOne" => true,
+        "NestedFieldTwo.FieldTwo" => "goodbye",
         "NestedFieldThree.member.1.FieldOne" => false,
-        "NestedFieldThree.member.2.FieldThree" => random_integer,
-        "NestedFieldTwo.FieldTwo" => "goodbye"} == NestedSimpleStruct.serialize(
+        "NestedFieldThree.member.2.FieldThree" => random_integer
+      } == NestedSimpleStruct.serialize(
         %NestedSimpleStruct{
           nested_field_one: true,
           nested_field_two: %SimpleStruct{
@@ -145,6 +146,10 @@ defmodule XmlStructTest do
 
       assert %{
         "DeeplyNestedFieldOne" => true,
+        "DeeplyNestedFieldTwo.NestedFieldOne" => true,
+        "DeeplyNestedFieldTwo.NestedFieldThree.member.1.FieldOne" => false,
+        "DeeplyNestedFieldTwo.NestedFieldThree.member.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldTwo.NestedFieldTwo.FieldTwo" => "goodbye",
         "DeeplyNestedFieldThree.member.1.NestedFieldOne" => true,
         "DeeplyNestedFieldThree.member.1.NestedFieldThree.member.1.FieldOne" => false,
         "DeeplyNestedFieldThree.member.1.NestedFieldThree.member.2.FieldThree" => random_integer,
@@ -152,11 +157,8 @@ defmodule XmlStructTest do
         "DeeplyNestedFieldThree.member.2.NestedFieldOne" => false,
         "DeeplyNestedFieldThree.member.2.NestedFieldThree.member.1.FieldOne" => true,
         "DeeplyNestedFieldThree.member.2.NestedFieldThree.member.2.FieldThree" => random_integer,
-        "DeeplyNestedFieldThree.member.2.NestedFieldTwo.FieldTwo" => "things",
-        "DeeplyNestedFieldTwo.NestedFieldOne" => true,
-        "DeeplyNestedFieldTwo.NestedFieldThree.member.1.FieldOne" => false,
-        "DeeplyNestedFieldTwo.NestedFieldThree.member.2.FieldThree" => random_integer,
-        "DeeplyNestedFieldTwo.NestedFieldTwo.FieldTwo" => "goodbye"} == DeeplyNestedSimpleStruct.serialize(
+        "DeeplyNestedFieldThree.member.2.NestedFieldTwo.FieldTwo" => "things"
+      } == DeeplyNestedSimpleStruct.serialize(
         %DeeplyNestedSimpleStruct{
           deeply_nested_field_one: true,
           deeply_nested_field_two: %NestedSimpleStruct{
@@ -214,6 +216,7 @@ defmodule XmlStructTest do
 
       assert %{
         "DeeplyNestedFieldOne" => true,
+        "DeeplyNestedFieldTwo.item.1.FieldThree" => random_integer,
         "DeeplyNestedFieldThree.item.1.NestedFieldOne" => true,
         "DeeplyNestedFieldThree.item.1.NestedFieldThree.item.1.FieldOne" => false,
         "DeeplyNestedFieldThree.item.1.NestedFieldThree.item.2.FieldThree" => random_integer,
@@ -221,27 +224,15 @@ defmodule XmlStructTest do
         "DeeplyNestedFieldThree.item.2.NestedFieldOne" => false,
         "DeeplyNestedFieldThree.item.2.NestedFieldThree.item.1.FieldOne" => true,
         "DeeplyNestedFieldThree.item.2.NestedFieldThree.item.2.FieldThree" => random_integer,
-        "DeeplyNestedFieldThree.item.2.NestedFieldTwo.FieldTwo" => "things",
-        "DeeplyNestedFieldTwo.NestedFieldOne" => true,
-        "DeeplyNestedFieldTwo.NestedFieldThree.item.1.FieldOne" => false,
-        "DeeplyNestedFieldTwo.NestedFieldThree.item.2.FieldThree" => random_integer,
-        "DeeplyNestedFieldTwo.NestedFieldTwo.FieldTwo" => "goodbye"} == DeeplyNestedListPrefixStruct.serialize(
+        "DeeplyNestedFieldThree.item.2.NestedFieldTwo.FieldTwo" => "things"
+      } == DeeplyNestedListPrefixStruct.serialize(
         %DeeplyNestedListPrefixStruct{
           deeply_nested_field_one: true,
-          deeply_nested_field_two: %NestedSimpleStruct{
-            nested_field_one: true,
-            nested_field_two: %SimpleStruct{
-              field_two: "goodbye"
-            },
-            nested_field_three: [
-              %SimpleStruct{
-                field_one: false
-              },
-              %SimpleStruct{
-                field_three: random_integer
-              }
-            ]
-          },
+          deeply_nested_field_two: [
+            %SimpleStruct{
+              field_three: random_integer
+            }
+          ],
           deeply_nested_field_three: [
             %NestedSimpleStruct{
               nested_field_one: true,
@@ -281,6 +272,10 @@ defmodule XmlStructTest do
 
       assert %{
         "DeeplyNestedFieldOne" => true,
+        "DeeplyNestedFieldTwo.item.1.NestedFieldOne" => true,
+        "DeeplyNestedFieldTwo.item.1.NestedFieldThree.thing.1.FieldOne" => false,
+        "DeeplyNestedFieldTwo.item.1.NestedFieldThree.thing.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldTwo.item.1.NestedFieldTwo.FieldTwo" => "goodbye",
         "DeeplyNestedFieldThree.item.1.NestedFieldOne" => true,
         "DeeplyNestedFieldThree.item.1.NestedFieldThree.thing.1.FieldOne" => false,
         "DeeplyNestedFieldThree.item.1.NestedFieldThree.thing.2.FieldThree" => random_integer,
@@ -288,27 +283,26 @@ defmodule XmlStructTest do
         "DeeplyNestedFieldThree.item.2.NestedFieldOne" => false,
         "DeeplyNestedFieldThree.item.2.NestedFieldThree.thing.1.FieldOne" => true,
         "DeeplyNestedFieldThree.item.2.NestedFieldThree.thing.2.FieldThree" => random_integer,
-        "DeeplyNestedFieldThree.item.2.NestedFieldTwo.FieldTwo" => "things",
-        "DeeplyNestedFieldTwo.NestedFieldOne" => true,
-        "DeeplyNestedFieldTwo.NestedFieldThree.thing.1.FieldOne" => false,
-        "DeeplyNestedFieldTwo.NestedFieldThree.thing.2.FieldThree" => random_integer,
-        "DeeplyNestedFieldTwo.NestedFieldTwo.FieldTwo" => "goodbye"} == DeeplyNestedListPrefixWithChildListPrefixStruct.serialize(
+        "DeeplyNestedFieldThree.item.2.NestedFieldTwo.FieldTwo" => "things"
+      } == DeeplyNestedListPrefixWithChildListPrefixStruct.serialize(
         %DeeplyNestedListPrefixWithChildListPrefixStruct{
           deeply_nested_field_one: true,
-          deeply_nested_field_two: %NestedListPrefixStruct{
-            nested_field_one: true,
-            nested_field_two: %SimpleStruct{
-              field_two: "goodbye"
-            },
-            nested_field_three: [
-              %SimpleStruct{
-                field_one: false
+          deeply_nested_field_two: [
+            %NestedListPrefixStruct{
+              nested_field_one: true,
+              nested_field_two: %SimpleStruct{
+                field_two: "goodbye"
               },
-              %SimpleStruct{
-                field_three: random_integer
-              }
-            ]
-          },
+              nested_field_three: [
+                %SimpleStruct{
+                  field_one: false
+                },
+                %SimpleStruct{
+                  field_three: random_integer
+                }
+              ]
+            }
+          ],
           deeply_nested_field_three: [
             %NestedListPrefixStruct{
               nested_field_one: true,
@@ -350,34 +344,37 @@ defmodule XmlStructTest do
 
       assert %{
         "DeeplyNestedFieldOne" => true,
-        "DeeplyNestedFieldThree.item.1.NestedFieldOne" => true,
-        "DeeplyNestedFieldThree.item.1.NestedFieldThree.item.1.FieldOne" => false,
-        "DeeplyNestedFieldThree.item.1.NestedFieldThree.item.2.FieldThree" => random_integer,
-        "DeeplyNestedFieldThree.item.1.NestedFieldTwo.FieldTwo" => "world",
-        "DeeplyNestedFieldThree.item.2.NestedFieldOne" => false,
-        "DeeplyNestedFieldThree.item.2.NestedFieldThree.item.1.FieldOne" => true,
-        "DeeplyNestedFieldThree.item.2.NestedFieldThree.item.2.FieldThree" => random_integer,
-        "DeeplyNestedFieldThree.item.2.NestedFieldTwo.FieldTwo" => "things",
-        "DeeplyNestedFieldTwo.NestedFieldOne" => true,
-        "DeeplyNestedFieldTwo.NestedFieldThree.member.1.FieldOne" => false,
-        "DeeplyNestedFieldTwo.NestedFieldThree.member.2.FieldThree" => random_integer,
-        "DeeplyNestedFieldTwo.NestedFieldTwo.FieldTwo" => "goodbye"} == DeeplyNestedFieldListPrefixStruct.serialize(
+        "DeeplyNestedFieldTwo.item.1.NestedFieldOne" => true,
+        "DeeplyNestedFieldTwo.item.1.NestedFieldThree.item.1.FieldOne" => false,
+        "DeeplyNestedFieldTwo.item.1.NestedFieldThree.item.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldTwo.item.1.NestedFieldTwo.FieldTwo" => "goodbye",
+        "DeeplyNestedFieldThree.thing.1.NestedFieldOne" => true,
+        "DeeplyNestedFieldThree.thing.1.NestedFieldThree.thing.1.FieldOne" => false,
+        "DeeplyNestedFieldThree.thing.1.NestedFieldThree.thing.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldThree.thing.1.NestedFieldTwo.FieldTwo" => "world",
+        "DeeplyNestedFieldThree.thing.2.NestedFieldOne" => false,
+        "DeeplyNestedFieldThree.thing.2.NestedFieldThree.thing.1.FieldOne" => true,
+        "DeeplyNestedFieldThree.thing.2.NestedFieldThree.thing.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldThree.thing.2.NestedFieldTwo.FieldTwo" => "things"
+      } == DeeplyNestedFieldListPrefixStruct.serialize(
         %DeeplyNestedFieldListPrefixStruct{
           deeply_nested_field_one: true,
-          deeply_nested_field_two: %NestedSimpleStruct{
-            nested_field_one: true,
-            nested_field_two: %SimpleStruct{
-              field_two: "goodbye"
-            },
-            nested_field_three: [
-              %SimpleStruct{
-                field_one: false
+          deeply_nested_field_two: [
+            %NestedSimpleStruct{
+              nested_field_one: true,
+              nested_field_two: %SimpleStruct{
+                field_two: "goodbye"
               },
-              %SimpleStruct{
-                field_three: random_integer
-              }
-            ]
-          },
+              nested_field_three: [
+                %SimpleStruct{
+                  field_one: false
+                },
+                %SimpleStruct{
+                  field_three: random_integer
+                }
+              ]
+            }
+          ],
           deeply_nested_field_three: [
             %NestedSimpleStruct{
               nested_field_one: true,
@@ -417,34 +414,37 @@ defmodule XmlStructTest do
 
       assert %{
         "DeeplyNestedFieldOne" => true,
-        "DeeplyNestedFieldThree.item.1.NestedFieldOne" => true,
-        "DeeplyNestedFieldThree.item.1.NestedFieldThree.thing.1.FieldOne" => false,
-        "DeeplyNestedFieldThree.item.1.NestedFieldThree.thing.2.FieldThree" => random_integer,
-        "DeeplyNestedFieldThree.item.1.NestedFieldTwo.FieldTwo" => "world",
-        "DeeplyNestedFieldThree.item.2.NestedFieldOne" => false,
-        "DeeplyNestedFieldThree.item.2.NestedFieldThree.thing.1.FieldOne" => true,
-        "DeeplyNestedFieldThree.item.2.NestedFieldThree.thing.2.FieldThree" => random_integer,
-        "DeeplyNestedFieldThree.item.2.NestedFieldTwo.FieldTwo" => "things",
-        "DeeplyNestedFieldTwo.NestedFieldOne" => true,
-        "DeeplyNestedFieldTwo.NestedFieldThree.thing.1.FieldOne" => false,
-        "DeeplyNestedFieldTwo.NestedFieldThree.thing.2.FieldThree" => random_integer,
-        "DeeplyNestedFieldTwo.NestedFieldTwo.FieldTwo" => "goodbye"} == DeeplyNestedFieldListPrefixWithChildListPrefixStruct.serialize(
+        "DeeplyNestedFieldTwo.item.1.NestedFieldOne" => true,
+        "DeeplyNestedFieldTwo.item.1.NestedFieldThree.thing.1.FieldOne" => false,
+        "DeeplyNestedFieldTwo.item.1.NestedFieldThree.thing.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldTwo.item.1.NestedFieldTwo.FieldTwo" => "goodbye",
+        "DeeplyNestedFieldThree.stuff.1.NestedFieldOne" => true,
+        "DeeplyNestedFieldThree.stuff.1.NestedFieldThree.thing.1.FieldOne" => false,
+        "DeeplyNestedFieldThree.stuff.1.NestedFieldThree.thing.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldThree.stuff.1.NestedFieldTwo.FieldTwo" => "world",
+        "DeeplyNestedFieldThree.stuff.2.NestedFieldOne" => false,
+        "DeeplyNestedFieldThree.stuff.2.NestedFieldThree.thing.1.FieldOne" => true,
+        "DeeplyNestedFieldThree.stuff.2.NestedFieldThree.thing.2.FieldThree" => random_integer,
+        "DeeplyNestedFieldThree.stuff.2.NestedFieldTwo.FieldTwo" => "things"
+      } == DeeplyNestedFieldListPrefixWithChildListPrefixStruct.serialize(
         %DeeplyNestedFieldListPrefixWithChildListPrefixStruct{
           deeply_nested_field_one: true,
-          deeply_nested_field_two: %NestedListPrefixStruct{
-            nested_field_one: true,
-            nested_field_two: %SimpleStruct{
-              field_two: "goodbye"
-            },
-            nested_field_three: [
-              %SimpleStruct{
-                field_one: false
+          deeply_nested_field_two: [
+            %NestedListPrefixStruct{
+              nested_field_one: true,
+              nested_field_two: %SimpleStruct{
+                field_two: "goodbye"
               },
-              %SimpleStruct{
-                field_three: random_integer
-              }
-            ]
-          },
+              nested_field_three: [
+                %SimpleStruct{
+                  field_one: false
+                },
+                %SimpleStruct{
+                  field_three: random_integer
+                }
+              ]
+            }
+          ],
           deeply_nested_field_three: [
             %NestedListPrefixStruct{
               nested_field_one: true,
