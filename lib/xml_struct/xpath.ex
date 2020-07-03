@@ -60,6 +60,14 @@ defmodule XmlStruct.Xpath do
     Recase.to_camel(name)
   end
 
+  defp recase(name, :kebab_case) do
+    Recase.to_kebab(name)
+  end
+
+  defp recase(name, :snake_case) do
+    Recase.to_snake(name)
+  end
+
   defp setup_options({name, type, opts}) do
     opts_as_map = Enum.into(opts, %{})
     options = Map.merge(@default_options, opts_as_map)
