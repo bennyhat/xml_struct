@@ -46,7 +46,7 @@ defmodule XmlStruct do
       def serialize(xml, options \\ %{}) do
         type_mappings_as_map = Enum.into(@type_mapping, %{})
         parent_options = unquote(options_as_map)
-        options_merged_with_parent = Map.merge(options, parent_options)
+        options_merged_with_parent = Map.merge(parent_options, options)
 
         Serializer.serialize(type_mappings_as_map, xml, options_merged_with_parent)
       end
