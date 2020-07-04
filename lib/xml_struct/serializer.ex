@@ -1,4 +1,6 @@
 defmodule XmlStruct.Serializer do
+  import XmlStruct.Util, only: [recase: 2]
+
   @default_struct_options %{
     tag_format: :pascal_case,
     list_prefix: "member",
@@ -43,7 +45,7 @@ defmodule XmlStruct.Serializer do
 
   def serialize(type_map, xml, opts) when is_map(xml) do
     opts_with_serialize_only = opts
-    |> Map.put(:serialize_only, all_key_mappings(xml, opts))
+    |> Map.put(:serialize_only, all_key_mappings(xml, type_map, opts))
 
     serialize(type_map, xml, opts_with_serialize_only)
   end
@@ -82,41 +84,18 @@ defmodule XmlStruct.Serializer do
     {k, serialized_value, o}
   end
 
-  defp all_key_mappings(map, %{tag_format: :camel_case}) do
-    build_camelized_mapping = fn key ->
-      {key, Recase.to_camel(Atom.to_string(key))}
+  defp all_key_mappings(map, type_map, %{tag_format: struct_tag_format}) do
+    build_recased_mapping = fn key ->
+      {_type, field_overrides} = Map.get(type_map, key, {nil, []})
+      tag_format = Map.get(Map.new(field_overrides), :tag_format, struct_tag_format)
+
+      {key, recase(Atom.to_string(key), tag_format)}
     end
 
     Map.keys(map)
-    |> Enum.map(build_camelized_mapping)
+    |> Enum.map(build_recased_mapping)
   end
-
-  defp all_key_mappings(map, %{tag_format: :kebab_case}) do
-    build_camelized_mapping = fn key ->
-      {key, Recase.to_kebab(Atom.to_string(key))}
-    end
-
-    Map.keys(map)
-    |> Enum.map(build_camelized_mapping)
-  end
-
-  defp all_key_mappings(map, %{tag_format: :snake_case}) do
-    build_camelized_mapping = fn key ->
-      {key, Recase.to_snake(Atom.to_string(key))}
-    end
-
-    Map.keys(map)
-    |> Enum.map(build_camelized_mapping)
-  end
-
-  defp all_key_mappings(map, _opts) do
-    build_camelized_mapping = fn key ->
-      {key, Recase.to_pascal(Atom.to_string(key))}
-    end
-
-    Map.keys(map)
-    |> Enum.map(build_camelized_mapping)
-  end
+  defp all_key_mappings(map, type_map, _opts), do: all_key_mappings(map, type_map, %{tag_format: Map.get(@default_struct_options, :tag_format)})
 
   defp keep_desired_fields(xml, %{serialize_only: serialize_only}) do
     {keep, _toss} = Map.split(xml, Keyword.keys(serialize_only))

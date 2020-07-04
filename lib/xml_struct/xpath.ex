@@ -1,5 +1,7 @@
 defmodule XmlStruct.Xpath do
   import XmlStruct.Xpath.CastingHelpers
+  require XmlStruct.Util
+  import XmlStruct.Util, only: [recase: 2]
 
   @default_parent_options %{
     enforce: false,
@@ -50,22 +52,6 @@ defmodule XmlStruct.Xpath do
       |> List.last()
 
     "./" <> recase(name_as_string, tag_format)
-  end
-
-  defp recase(name, :pascal_case) do
-    Recase.to_pascal(name)
-  end
-
-  defp recase(name, :camel_case) do
-    Recase.to_camel(name)
-  end
-
-  defp recase(name, :kebab_case) do
-    Recase.to_kebab(name)
-  end
-
-  defp recase(name, :snake_case) do
-    Recase.to_snake(name)
   end
 
   defp setup_options({name, type, opts}) do

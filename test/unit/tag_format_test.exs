@@ -28,6 +28,26 @@ defmodule TagTest.ModuleFormatSnake do
   end
 end
 
+defmodule TagTest.ModuleFormatCamelChildModuleFormatVarious do
+  use XmlStruct
+
+  xmlstruct tag_format: :camel_case do
+    field :nested_field_one, boolean()
+    field :nested_field_two, TagTest.ModuleFormatSnake.t()
+    field :nested_field_three, [TagTest.ModuleFormatKebab.t()]
+  end
+end
+
+defmodule TagTest.ModuleFormatCamelChildFieldFormatVarious do
+  use XmlStruct
+
+  xmlstruct tag_format: :camel_case do
+    field :nested_field_one, boolean()
+    field :nested_field_two, TagTest.ModuleFormatSnake.t()
+    field :nested_field_three, [TagTest.ModuleFormatKebab.t()], tag_format: :pascal_case
+  end
+end
+
 defmodule TagTest do
   use ExUnit.Case
 
@@ -108,6 +128,78 @@ defmodule TagTest do
             },
             %SimpleStruct{
               field_three: random_integer
+            }
+          ]
+        }
+      )
+    end
+  end
+
+  describe "TagTest.ModuleFormatCamelChildModuleFormatVarious.serialize/1" do
+    test "serializes with a module-level tag format" do
+      random_integer = Faker.random_between(1, 10)
+
+      assert %{
+        "nestedFieldOne" => true,
+        "nestedFieldThree.member.1.nested-field-two.field-three" => random_integer,
+        "nestedFieldThree.member.2.nested-field-three.member.1.field-one" => false,
+        "nestedFieldTwo.nested_field_two.field_two" => "hello"
+      } == TagTest.ModuleFormatCamelChildModuleFormatVarious.serialize(
+        %TagTest.ModuleFormatCamelChildModuleFormatVarious{
+          nested_field_one: true,
+          nested_field_two: %TagTest.ModuleFormatSnake{
+            nested_field_two: %SimpleStruct{
+              field_two: "hello"
+            }
+          },
+          nested_field_three: [
+            %TagTest.ModuleFormatKebab{
+              nested_field_two: %SimpleStruct{
+                field_three: random_integer
+              }
+            },
+            %TagTest.ModuleFormatKebab{
+              nested_field_three: [
+                %SimpleStruct{
+                  field_one: false
+                }
+              ]
+            }
+          ]
+        }
+      )
+    end
+  end
+
+  describe "TagTest.ModuleFormatCamelChildFieldFormatVarious.serialize/1" do
+    test "serializes with a module-level tag format" do
+      random_integer = Faker.random_between(1, 10)
+
+      assert %{
+        "nestedFieldOne" => true,
+        "NestedFieldThree.member.1.nested-field-two.field-three" => random_integer,
+        "NestedFieldThree.member.2.nested-field-three.member.1.field-one" => false,
+        "nestedFieldTwo.nested_field_two.field_two" => "hello"
+      } == TagTest.ModuleFormatCamelChildFieldFormatVarious.serialize(
+        %TagTest.ModuleFormatCamelChildFieldFormatVarious{
+          nested_field_one: true,
+          nested_field_two: %TagTest.ModuleFormatSnake{
+            nested_field_two: %SimpleStruct{
+              field_two: "hello"
+            }
+          },
+          nested_field_three: [
+            %TagTest.ModuleFormatKebab{
+              nested_field_two: %SimpleStruct{
+                field_three: random_integer
+              }
+            },
+            %TagTest.ModuleFormatKebab{
+              nested_field_three: [
+                %SimpleStruct{
+                  field_one: false
+                }
+              ]
             }
           ]
         }
