@@ -1,7 +1,7 @@
 defmodule XmlStruct do
   alias XmlStruct
   alias XmlStruct.Deserializer
-  alias XmlStruct.Field
+  alias XmlStruct.TypedFieldModifier
   alias XmlStruct.Serializer
   alias XmlStruct.Struct
   alias XmlStruct.Xpath
@@ -22,7 +22,7 @@ defmodule XmlStruct do
 
       alias XmlStruct
       alias XmlStruct.Deserializer
-      alias XmlStruct.Field
+      alias XmlStruct.TypedFieldModifier
       alias XmlStruct.Serializer
       alias XmlStruct.Struct
       alias XmlStruct.Xpath
@@ -31,7 +31,7 @@ defmodule XmlStruct do
       Module.register_attribute(__MODULE__, :type_mapping, accumulate: true)
       Module.register_attribute(__MODULE__, :xpath_selectors, accumulate: false)
 
-      unquote(Macro.prewalk(block, &Field.field_to_xml_field/1))
+      unquote(Macro.prewalk(block, &TypedFieldModifier.field_to_xml_field/1))
       typedstruct(unquote(opts), do: unquote(block))
 
       Xpath.build_selectors(

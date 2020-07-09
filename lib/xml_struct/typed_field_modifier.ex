@@ -1,4 +1,4 @@
-defmodule XmlStruct.Field do
+defmodule XmlStruct.TypedFieldModifier do
   def field_to_xml_field({:field, meta, [name, {{_, _, [{:__aliases__, meta, args}, :t]}, _, _}]}) do
     {:typed_field, meta, [name, {:__aliases__, meta, args}]}
   end

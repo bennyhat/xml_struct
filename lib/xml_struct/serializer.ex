@@ -1,5 +1,10 @@
 defmodule XmlStruct.Serializer do
-  import XmlStruct.Util, only: [recase: 2]
+  import XmlStruct.Util, only: [
+    recase: 2,
+    remove_nil_or_empty_fields: 1,
+    strip_options: 1,
+    triage: 1,
+  ]
 
   @default_struct_options %{
     tag_format: :pascal_case,
@@ -13,17 +18,13 @@ defmodule XmlStruct.Serializer do
   }
 
   def serialize(type_map, xml_list, opts \\ %{})
-  def serialize(type_map, xml_list, opts) when is_list(xml_list) do
-    xml_list
-    |> Enum.map(&serialize(type_map, &1, opts))
-  end
-
   def serialize(type_map, %_is_struct{} = xml, opts) do
     serialize(type_map, Map.from_struct(xml), opts)
   end
-
-  def serialize(type_map, map, %{serialize_only: [_|_]} = opts) when is_map(map) do
+  def serialize(type_map, map, opts) when is_map(map) do
+    desired_fields = determine_desired_fields(map, type_map, opts)
     struct_options = Map.merge(@default_struct_options, opts)
+    |> Map.put(:serialize_only, desired_fields)
     field_options = Map.merge(struct_options, @struct_options_to_reset)
 
     map_with_field_options_applied =
@@ -42,19 +43,10 @@ defmodule XmlStruct.Serializer do
     |> remove_nil_or_empty_fields()
     |> Map.new()
   end
-
-  def serialize(type_map, xml, opts) when is_map(xml) do
-    opts_with_serialize_only = opts
-    |> Map.put(:serialize_only, all_key_mappings(xml, type_map, opts))
-
-    serialize(type_map, xml, opts_with_serialize_only)
-  end
-
   def serialize(_type_map, atom_type, _opts)
       when is_atom(atom_type) and not is_nil(atom_type) and not is_boolean(atom_type) do
     Atom.to_string(atom_type)
   end
-
   def serialize(_type_map, other_type, _opts) do
     other_type
   end
@@ -82,6 +74,13 @@ defmodule XmlStruct.Serializer do
       end
 
     {k, serialized_value, o}
+  end
+
+  defp determine_desired_fields(map, type_map, opts) do
+    case Map.get(opts, :serialize_only, []) do
+      [] -> all_key_mappings(map, type_map, opts)
+      so -> so
+    end
   end
 
   defp all_key_mappings(map, type_map, %{tag_format: struct_tag_format}) do
@@ -161,27 +160,4 @@ defmodule XmlStruct.Serializer do
 
   defp remove_key({k, v, %{serialize_as_object: true} = o}), do: {k, v, o}
   defp remove_key({_k, v, %{serialize_as_object: false} = o}), do: {v, o}
-
-  defp strip_options(xml) do
-    Enum.map(xml, &strip_field_options/1)
-  end
-  defp strip_field_options({k, v, _o}), do: {k, v}
-  defp strip_field_options({v, _o}), do: {v}
-
-  defp remove_nil_or_empty_fields(fields) do
-    fields
-    |> Enum.reject(fn
-      {_k, nil} -> true
-      {_k, []} -> true
-      {_k, _v} -> false
-      %{} -> false
-    end)
-  end
-
-  defp triage(%_struct{}), do: {:single, :struct}
-  defp triage(map) when is_map(map), do: {:single, :map}
-  defp triage([%_struct{} | _]), do: {:list, :struct}
-  defp triage([map | _]) when is_map(map), do: {:list, :map}
-  defp triage(v) when is_list(v), do: {:list, :other_type}
-  defp triage(_), do: {:single, :other_type}
 end

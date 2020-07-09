@@ -10,7 +10,7 @@ defmodule XmlStruct.Struct do
         is_nil(v)
       end)
       |> Enum.map(&nested_new(&1, type_mapping))
-      |> Enum.into(%{})
+      |> Map.new()
 
     struct!(module, filled_map)
   end
