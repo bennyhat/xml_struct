@@ -10,6 +10,8 @@ defmodule XmlStruct.Util do
       {_k, nil} -> true
       {_k, []} -> true
       {_k, _v} -> false
+      nil -> true
+      _v -> false
       %{} -> false
     end)
   end
@@ -18,7 +20,7 @@ defmodule XmlStruct.Util do
     Enum.map(xml, &strip_field_options/1)
   end
   def strip_field_options({k, v, _o}), do: {k, v}
-  def strip_field_options({v, _o}), do: {v}
+  def strip_field_options({v, _o}), do: v
 
   def triage(%_struct{}), do: {:single, :struct}
   def triage(map) when is_map(map), do: {:single, :map}

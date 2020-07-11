@@ -163,7 +163,7 @@ defmodule SerializeOnlyTest do
   end
 
   describe "NestedMixedSerializeOnly.serialize/1" do
-    test "serializes with nested mix of field and module-level serialize directives" do
+    test "module level serialize only overrides parent's field level serialize only" do
       assert %{
         "F2.member.1.FIELD_ONE" => 10,
         "F2.member.1.field-two" => "stuff",

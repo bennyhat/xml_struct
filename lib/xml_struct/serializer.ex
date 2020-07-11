@@ -37,7 +37,6 @@ defmodule XmlStruct.Serializer do
     |> serialize_values(type_map)
     |> apply_list_prefix_to_keys()
     |> apply_object_prefix_to_fields()
-    |> remove_keys_if_desired()
     |> List.flatten()
     |> strip_options()
     |> remove_nil_or_empty_fields()
@@ -143,6 +142,21 @@ defmodule XmlStruct.Serializer do
     Enum.map(xml, &apply_object_prefix_to_field/1)
     |> List.flatten()
   end
+  defp apply_object_prefix_to_field({k, v, %{serialize_as_object: false} = o}) do
+    case triage(v) do
+      {:single, type} when type in [:struct, :map] ->
+        Enum.map(v, fn {vk, vv} ->
+          replaced_key = case String.contains?(k, ".") do
+            true -> Regex.replace(~r/^.*?\.(.*)$/, k, vk <> ".\\1")
+            false -> vk
+
+          end
+          {replaced_key, vv, o}
+        end)
+      _ ->
+        {k, v, o}
+    end
+  end
   defp apply_object_prefix_to_field({k, v, o}) do
     case triage(v) do
       {:single, type} when type in [:struct, :map] ->
@@ -153,11 +167,4 @@ defmodule XmlStruct.Serializer do
         {k, v, o}
     end
   end
-
-  defp remove_keys_if_desired(xml) do
-    Enum.map(xml, &remove_key/1)
-  end
-
-  defp remove_key({k, v, %{serialize_as_object: true} = o}), do: {k, v, o}
-  defp remove_key({_k, v, %{serialize_as_object: false} = o}), do: {v, o}
 end
