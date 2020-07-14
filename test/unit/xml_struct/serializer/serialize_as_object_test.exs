@@ -28,7 +28,7 @@ defmodule ObjectFormatTest.NestedFieldFormatOnlyCascade do
   end
 end
 
-defmodule ObjectFormatTest do
+defmodule XmlStruct.Serializer.ObjectFormatTest do
   use ExUnit.Case
 
   describe "FieldFormatOnly.serialize/1" do

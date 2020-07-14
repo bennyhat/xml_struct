@@ -31,10 +31,8 @@ defmodule XmlStruct.Serializer do
     serialize(type_map, Map.from_struct(xml), opts)
   end
   def serialize(type_map, map, opts) when is_map(map) do
-    struct_options = Map.merge(@default_struct_options, opts)
-    desired_fields = determine_desired_fields(map, type_map, struct_options)
-    struct_options = Map.put(struct_options, :serialize_only, desired_fields)
-    field_options = Map.merge(struct_options, @struct_options_to_reset)
+    struct_options = extract_struct_options(map, type_map, opts)
+    field_options = extract_field_options(struct_options)
 
     map_with_field_options_applied =
       map
@@ -82,5 +80,15 @@ defmodule XmlStruct.Serializer do
       end
 
     {k, serialized_value, o}
+  end
+
+  defp extract_struct_options(map, type_map, opts) do
+    struct_options = Map.merge(@default_struct_options, opts)
+    desired_fields = determine_desired_fields(map, type_map, struct_options)
+    Map.put(struct_options, :serialize_only, desired_fields)
+  end
+
+  defp extract_field_options(struct_options) do
+    Map.merge(struct_options, @struct_options_to_reset)
   end
 end

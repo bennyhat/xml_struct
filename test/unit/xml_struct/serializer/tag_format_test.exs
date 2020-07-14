@@ -48,7 +48,7 @@ defmodule TagTest.ModuleFormatCamelChildFieldFormatVarious do
   end
 end
 
-defmodule TagTest do
+defmodule XmlStruct.Serializer.TagTest do
   use ExUnit.Case
 
   describe "ModuleFormatCamel.serialize/1" do

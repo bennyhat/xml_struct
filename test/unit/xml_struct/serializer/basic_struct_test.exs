@@ -1,4 +1,4 @@
-defmodule BasicStructTest do
+defmodule XmlStruct.Serializer.BasicStructTest do
   use ExUnit.Case
 
   describe "SimpleStruct.serialize/1" do

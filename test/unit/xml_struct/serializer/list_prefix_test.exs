@@ -8,7 +8,7 @@ defmodule PrefixTest.ModulePrefixThing do
   end
 end
 
-defmodule  PrefixTest.ModulePrefixItem do
+defmodule PrefixTest.ModulePrefixItem do
   use XmlStruct
 
   xmlstruct list_prefix: "item" do
@@ -48,7 +48,7 @@ defmodule PrefixTest.ModulePrefixItemChildFieldPrefixStuff do
   end
 end
 
-defmodule PrefixTest do
+defmodule XmlStruct.Serializer.PrefixTest do
   use ExUnit.Case
 
   describe "PrefixTest.ModulePrefix.serialize/1" do

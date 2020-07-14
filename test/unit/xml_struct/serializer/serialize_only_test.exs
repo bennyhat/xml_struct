@@ -48,7 +48,7 @@ defmodule SerializeOnlyTest.NestedMixedSerializeOnly do
   end
 end
 
-defmodule SerializeOnlyTest do
+defmodule XmlStruct.Serializer.SerializeOnlyTest do
   use ExUnit.Case
 
   describe "ModuleSerializeOnly.serialize/1" do
