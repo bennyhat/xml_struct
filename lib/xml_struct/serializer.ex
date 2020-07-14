@@ -1,9 +1,17 @@
 defmodule XmlStruct.Serializer do
   import XmlStruct.Util, only: [
-    recase: 2,
     remove_nil_or_empty_fields: 1,
-    strip_options: 1,
     triage: 1,
+  ]
+
+  import XmlStruct.Serializer.FieldAdjuster, only: [
+    determine_desired_fields: 3,
+    keep_desired_fields: 2,
+    attach_options: 3,
+    apply_key_overrides: 2,
+    apply_list_prefix_to_keys: 1,
+    apply_object_prefix_to_fields: 1,
+    strip_options: 1,
   ]
 
   @default_struct_options %{
@@ -14,7 +22,8 @@ defmodule XmlStruct.Serializer do
   }
 
   @struct_options_to_reset %{
-    serialize_only: []
+    serialize_only: [],
+    serialize_as_object: true
   }
 
   def serialize(type_map, xml_list, opts \\ %{})
@@ -22,9 +31,9 @@ defmodule XmlStruct.Serializer do
     serialize(type_map, Map.from_struct(xml), opts)
   end
   def serialize(type_map, map, opts) when is_map(map) do
-    desired_fields = determine_desired_fields(map, type_map, opts)
     struct_options = Map.merge(@default_struct_options, opts)
-    |> Map.put(:serialize_only, desired_fields)
+    desired_fields = determine_desired_fields(map, type_map, struct_options)
+    struct_options = Map.put(struct_options, :serialize_only, desired_fields)
     field_options = Map.merge(struct_options, @struct_options_to_reset)
 
     map_with_field_options_applied =
@@ -73,98 +82,5 @@ defmodule XmlStruct.Serializer do
       end
 
     {k, serialized_value, o}
-  end
-
-  defp determine_desired_fields(map, type_map, opts) do
-    case Map.get(opts, :serialize_only, []) do
-      [] -> all_key_mappings(map, type_map, opts)
-      so -> so
-    end
-  end
-
-  defp all_key_mappings(map, type_map, %{tag_format: struct_tag_format}) do
-    build_recased_mapping = fn key ->
-      {_type, field_overrides} = Map.get(type_map, key, {nil, []})
-      tag_format = Map.get(Map.new(field_overrides), :tag_format, struct_tag_format)
-
-      {key, recase(Atom.to_string(key), tag_format)}
-    end
-
-    Map.keys(map)
-    |> Enum.map(build_recased_mapping)
-  end
-  defp all_key_mappings(map, type_map, _opts), do: all_key_mappings(map, type_map, %{tag_format: Map.get(@default_struct_options, :tag_format)})
-
-  defp keep_desired_fields(xml, %{serialize_only: serialize_only}) do
-    {keep, _toss} = Map.split(xml, Keyword.keys(serialize_only))
-
-    keep
-  end
-
-  defp attach_options(xml, type_map, field_options) do
-    Enum.map(xml, &attach_field_options(&1, type_map, field_options))
-  end
-
-  defp attach_field_options({k, v}, type_map, field_options) do
-    {_type, field_overrides} = Map.get(type_map, k, {nil, []})
-
-    overrides_as_map = Map.new(field_overrides)
-    overrides_with_field_fallbacks = Map.merge(field_options, overrides_as_map)
-
-    {k, v, overrides_with_field_fallbacks}
-  end
-
-  defp apply_key_overrides(xml, %{serialize_only: serialize_only}) do
-    Enum.map(xml, fn {k, v, o} ->
-      {Keyword.get(serialize_only, k), v, o}
-    end)
-  end
-
-  defp apply_list_prefix_to_keys(xml) do
-    Enum.map(xml, &apply_list_prefix_to_key/1)
-    |> List.flatten()
-  end
-  defp apply_list_prefix_to_key({k, v, %{list_prefix: lp} = o}) do
-    handle_index = fn {vi, i} ->
-      {"#{k}.#{lp}.#{i}", vi, o}
-    end
-
-    case triage(v) do
-      {:list, _} ->
-        Enum.with_index(v, 1)
-        |> Enum.map(handle_index)
-      _ ->
-        {k, v, o}
-    end
-  end
-
-  defp apply_object_prefix_to_fields(xml) do
-    Enum.map(xml, &apply_object_prefix_to_field/1)
-    |> List.flatten()
-  end
-  defp apply_object_prefix_to_field({k, v, %{serialize_as_object: false} = o}) do
-    case triage(v) do
-      {:single, type} when type in [:struct, :map] ->
-        Enum.map(v, fn {vk, vv} ->
-          replaced_key = case String.contains?(k, ".") do
-            true -> Regex.replace(~r/^.*?\.(.*)$/, k, vk <> ".\\1")
-            false -> vk
-
-          end
-          {replaced_key, vv, o}
-        end)
-      _ ->
-        {k, v, o}
-    end
-  end
-  defp apply_object_prefix_to_field({k, v, o}) do
-    case triage(v) do
-      {:single, type} when type in [:struct, :map] ->
-        Enum.map(v, fn {vk, vv} ->
-          {"#{k}.#{vk}", vv, o}
-        end)
-      _ ->
-        {k, v, o}
-    end
   end
 end
