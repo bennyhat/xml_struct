@@ -64,8 +64,11 @@ defmodule XmlStruct do
         Struct.new(__MODULE__, type_mappings_as_map, map)
       end
 
-      def xpath_selector() do
-        Xpath.xpath(__MODULE__, @type_listing, unquote(options_as_map))
+      def xpath_selector(options \\ %{}) do
+        parent_options = unquote(options_as_map)
+        options_merged_with_parent = Map.merge(options, parent_options)
+
+        Xpath.xpath(__MODULE__, @type_listing, options_merged_with_parent)
       end
 
       def xpath_selectors() do

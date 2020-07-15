@@ -47,19 +47,5 @@ defmodule XmlStruct.Deserializer.TagTest do
         """
       )
     end
-
-    test "omits missing fields" do
-      assert %SimpleStruct{
-        field_one: false,
-        field_three: 25
-      } == SimpleStruct.deserialize(
-        """
-        <SimpleStruct>
-          <FieldOne>false</FieldOne>
-          <FieldThree>25</FieldThree>
-        </SimpleStruct>
-        """
-      )
-    end
   end
 end

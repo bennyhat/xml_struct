@@ -68,7 +68,7 @@ defmodule XmlStruct.Xpath do
 
     case function_exported?(type, :xpath_selector, 0) do
       true ->
-        output = apply(type, :xpath_selector, [])
+        output = apply(type, :xpath_selector, [merged_options])
         {name, type, determine_casting(output, type, opts), opts}
 
       false ->
