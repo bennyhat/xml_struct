@@ -20,18 +20,18 @@ defmodule XmlStruct.Xpath do
   end
 
   def xpath(module, types, options) do
-    options = Map.merge(@default_parent_options, options)
+    merged_options = Map.merge(@default_parent_options, options)
 
     nested_paths =
       types
-      |> Enum.map(&setup_options/1)
-      |> Enum.map(&extract_nested_xpath(&1, options))
-      |> Enum.map(&apply_list_augments/1)
-      |> Enum.map(&apply_type_augments/1)
-      |> Enum.map(&apply_configured_overrides/1)
+      |> attach_options()
+      |> extract_nested_xpath(merged_options)
+      |> apply_list_prefix_to_types()
+      |> apply_type_transformations()
+      |> apply_selector_overrides()
 
     [
-      create_module_selector(module, options)
+      create_module_selector(module, merged_options)
     ] ++
       nested_paths
   end
@@ -54,14 +54,20 @@ defmodule XmlStruct.Xpath do
     "./" <> recase(name_as_string, tag_format)
   end
 
-  defp setup_options({name, type, opts}) do
+  defp attach_options(type_list) do
+    Enum.map(type_list, &attach_field_options/1)
+  end
+  defp attach_field_options({name, type, opts}) do
     opts_as_map = Enum.into(opts, %{})
     options = Map.merge(@default_options, opts_as_map)
 
     {name, type, options}
   end
 
-  defp extract_nested_xpath({name, type, opts}, options) do
+  defp extract_nested_xpath(type_list, options) do
+    Enum.map(type_list, &extract_field_xpath(&1, options))
+  end
+  defp extract_field_xpath({name, type, opts}, options) do
     Code.ensure_compiled(type)
 
     merged_options = Map.merge(options, opts)
@@ -77,7 +83,10 @@ defmodule XmlStruct.Xpath do
     end
   end
 
-  defp apply_type_augments({name, type, selector, %{is_simple_type: true} = opts}) do
+  defp apply_type_transformations(type_list) do
+    Enum.map(type_list, &apply_type_transformation/1)
+  end
+  defp apply_type_transformation({name, type, selector, %{is_simple_type: true} = opts}) do
     case type do
       :integer ->
         {name, selector |> SweetXml.transform_by(&safe_to_integer/1), opts}
@@ -90,7 +99,7 @@ defmodule XmlStruct.Xpath do
     end
   end
 
-  defp apply_type_augments({name, type, selector, %{enforce: false} = opts}) do
+  defp apply_type_transformation({name, type, selector, %{enforce: false} = opts}) do
     case type do
       String -> {name, selector |> SweetXml.transform_by(&safe_to_string/1), opts}
       :boolean -> {name, selector |> SweetXml.transform_by(&safe_to_boolean/1), opts}
@@ -98,26 +107,32 @@ defmodule XmlStruct.Xpath do
     end
   end
 
-  defp apply_type_augments({name, type, selector, opts}) do
+  defp apply_type_transformation({name, type, selector, opts}) do
     case type do
       :boolean -> {name, selector |> SweetXml.transform_by(&String.to_atom/1), opts}
       _ -> {name, selector, opts}
     end
   end
 
-  defp apply_list_augments({name, type, selector, %{is_list: true} = opts}) do
+  defp apply_list_prefix_to_types(type_list) do
+    Enum.map(type_list, &apply_list_prefix_to_type/1)
+  end
+  defp apply_list_prefix_to_type({name, type, selector, %{is_list: true} = opts}) do
     {name, type, as_xml_list(selector, opts), opts}
   end
 
-  defp apply_list_augments({name, type, selector, opts}) do
+  defp apply_list_prefix_to_type({name, type, selector, opts}) do
     {name, type, as_xml_element(selector, opts), opts}
   end
 
-  defp apply_configured_overrides({name, [_ | nested_selectors], %{selector_override: override}}),
+  defp apply_selector_overrides(type_list) do
+    Enum.map(type_list, &apply_selector_override/1)
+  end
+  defp apply_selector_override({name, [_ | nested_selectors], %{selector_override: override}}),
     do: {name, [override] ++ nested_selectors}
 
-  defp apply_configured_overrides({name, _, %{selector_override: override}}), do: {name, override}
-  defp apply_configured_overrides({name, selectors, _opts}), do: {name, selectors}
+  defp apply_selector_override({name, _, %{selector_override: override}}), do: {name, override}
+  defp apply_selector_override({name, selectors, _opts}), do: {name, selectors}
 
   defp as_xml_list([main_selector | nested_selectors], %{list_prefix: list_prefix}) do
     main_selector_as_list =

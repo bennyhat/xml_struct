@@ -43,12 +43,10 @@ defmodule XmlStruct do
 
       use Accessible
 
-      def serialize(xml, options \\ %{}) do
-        type_mappings_as_map = Enum.into(@type_mapping, %{})
-        parent_options = unquote(options_as_map)
-        options_merged_with_parent = Map.merge(options, parent_options)
+      def serialize(xml, parent_options \\ %{}) do
+        type_mappings_as_map = Map.new(@type_mapping)
 
-        Serializer.serialize(type_mappings_as_map, xml, options_merged_with_parent)
+        Serializer.serialize(type_mappings_as_map, xml, merge_with_module_options(parent_options))
       end
 
       def deserialize(xml) do
@@ -64,15 +62,17 @@ defmodule XmlStruct do
         Struct.new(__MODULE__, type_mappings_as_map, map)
       end
 
-      def xpath_selector(options \\ %{}) do
-        parent_options = unquote(options_as_map)
-        options_merged_with_parent = Map.merge(options, parent_options)
-
-        Xpath.xpath(__MODULE__, @type_listing, options_merged_with_parent)
-      end
-
       def xpath_selectors() do
         @xpath_selectors
+      end
+
+      def xpath_selector(parent_options \\ %{}) do
+        Xpath.xpath(__MODULE__, @type_listing, merge_with_module_options(parent_options))
+      end
+
+      defp merge_with_module_options(parent_options) do
+        explicit_options = unquote(options_as_map)
+        Map.merge(parent_options, explicit_options)
       end
     end
   end
