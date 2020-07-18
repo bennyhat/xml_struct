@@ -1,7 +1,7 @@
 defmodule XmlStruct.Xpath do
   import XmlStruct.Xpath.CastingHelpers
   require XmlStruct.Util
-  import XmlStruct.Util, only: [recase: 2]
+  import XmlStruct.Util, only: [recase: 2, replace: 3]
 
   @default_parent_options %{
     enforce: false,
@@ -28,6 +28,7 @@ defmodule XmlStruct.Xpath do
       |> extract_nested_xpath(merged_options)
       |> apply_list_prefix_to_types()
       |> apply_type_transformations()
+      |> apply_tag_format_overrides()
       |> apply_selector_overrides()
 
     [
@@ -128,6 +129,29 @@ defmodule XmlStruct.Xpath do
   defp apply_selector_overrides(type_list) do
     Enum.map(type_list, &apply_selector_override/1)
   end
+
+  defp recase_selector(selector, tag_format) do
+    replace(selector, :path, fn path ->
+      [root, field | rest] = path
+      |> to_string()
+      |> String.split("/")
+
+      formatted_field = recase(field, tag_format)
+
+      [root, formatted_field, rest]
+      |> Enum.join("/")
+      |> to_charlist()
+    end)
+  end
+
+  defp apply_tag_format_overrides(type_list) do
+    Enum.map(type_list, &apply_tag_format_override/1)
+  end
+  defp apply_tag_format_override({name, [field_selector | nested_selectors], %{tag_format: tag_format} = options}) do
+    {name, [recase_selector(field_selector, tag_format)] ++ nested_selectors, options}
+  end
+  defp apply_tag_format_override(field), do: field
+
   defp apply_selector_override({name, [_ | nested_selectors], %{selector_override: override}}),
     do: {name, [override] ++ nested_selectors}
 

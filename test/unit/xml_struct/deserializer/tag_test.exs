@@ -198,4 +198,58 @@ defmodule XmlStruct.Deserializer.TagTest do
       )
     end
   end
+
+  describe "ModuleFormatCamelChildFieldFormatVarious.deserialize/1" do
+    test "deserializes with a module-level tag format and field format children" do
+      assert %ModuleFormatCamelChildFieldFormatVarious{
+        nested_field_one: true,
+        nested_field_two: %ModuleFormatSnake{
+          nested_field_two: %SimpleStruct{
+            field_two: "hello"
+          },
+          nested_field_three: [] # TODO - change this
+        },
+        nested_field_three: [
+          %ModuleFormatKebab{
+            nested_field_two: %SimpleStruct{
+              field_three: 35
+            },
+            nested_field_three: [] # TODO - change this
+          },
+          %ModuleFormatKebab{
+            nested_field_three: [
+              %SimpleStruct{
+                field_one: false
+              }
+            ]
+          }
+        ]
+      } == ModuleFormatCamelChildFieldFormatVarious.deserialize(
+        """
+        <moduleFormatCamelChildFieldFormatVarious>
+          <nestedFieldOne>true</nestedFieldOne>
+          <module_format_snake>
+            <simple_struct>
+              <field_two>hello</field_two>
+            </simple_struct>
+          </module_format_snake>
+          <ModuleFormatKebabs>
+            <member>
+              <simple-struct>
+                <field-three>35</field-three>
+              </simple-struct>
+            </member>
+            <member>
+              <simple-structs>
+                <member>
+                  <field-one>false</field-one>
+                </member>
+              </simple-structs>
+            </member>
+          </ModuleFormatKebabs>
+        </moduleFormatCamelChildFieldFormatVarious>
+        """
+      )
+    end
+  end
 end

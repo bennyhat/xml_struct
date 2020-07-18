@@ -21,4 +21,11 @@ defmodule XmlStruct.Util do
   def triage([map | _]) when is_map(map), do: {:list, :map}
   def triage(v) when is_list(v), do: {:list, :other_type}
   def triage(_), do: {:single, :other_type}
+
+  def replace(map, key, function) do
+    case Map.fetch(map, key) do
+      {:ok, value} -> Map.put(map, key, function.(value))
+      :error -> map
+    end
+  end
 end
