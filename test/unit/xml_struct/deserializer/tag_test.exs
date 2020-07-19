@@ -203,7 +203,7 @@ defmodule XmlStruct.Deserializer.TagTest do
     test "deserializes with a module-level tag format and field format children" do
       assert %ModuleFormatCamelChildFieldFormatVarious{
         nested_field_one: true,
-        nested_field_two: %ModuleFormatSnake{
+        nested_field_two: %NestedSimpleStruct{
           nested_field_two: %SimpleStruct{
             field_two: "hello"
           },
@@ -228,11 +228,11 @@ defmodule XmlStruct.Deserializer.TagTest do
         """
         <moduleFormatCamelChildFieldFormatVarious>
           <nestedFieldOne>true</nestedFieldOne>
-          <module_format_snake>
-            <simple_struct>
-              <field_two>hello</field_two>
-            </simple_struct>
-          </module_format_snake>
+          <NestedSimpleStruct>
+            <SimpleStruct>
+              <FieldTwo>hello</FieldTwo>
+            </SimpleStruct>
+          </NestedSimpleStruct>
           <ModuleFormatKebabs>
             <member>
               <simple-struct>

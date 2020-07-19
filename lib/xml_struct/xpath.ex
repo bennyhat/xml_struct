@@ -132,15 +132,23 @@ defmodule XmlStruct.Xpath do
 
   defp recase_selector(selector, tag_format) do
     replace(selector, :path, fn path ->
-      [root, field | rest] = path
+      split_path = path
       |> to_string()
       |> String.split("/")
 
-      formatted_field = recase(field, tag_format)
-
-      [root, formatted_field, rest]
-      |> Enum.join("/")
-      |> to_charlist()
+      # TODO - clean this crap up
+      case split_path do
+        [root, field] ->
+          formatted_field = recase(field, tag_format)
+          [root, formatted_field]
+          |> Enum.join("/")
+          |> to_charlist()
+        [root, field | rest] ->
+          formatted_field = recase(field, tag_format)
+          [root, formatted_field, rest]
+          |> Enum.join("/")
+          |> to_charlist()
+      end
     end)
   end
 

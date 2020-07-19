@@ -43,7 +43,7 @@ defmodule ModuleFormatCamelChildFieldFormatVarious do
 
   xmlstruct tag_format: :camel_case do
     field :nested_field_one, boolean()
-    field :nested_field_two, ModuleFormatSnake.t()
+    field :nested_field_two, NestedSimpleStruct.t(), tag_format: :pascal_case
     field :nested_field_three, [ModuleFormatKebab.t()], tag_format: :pascal_case
   end
 end
